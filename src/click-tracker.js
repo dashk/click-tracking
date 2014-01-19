@@ -30,14 +30,14 @@ if (typeof(window.ClickTracker) === 'undefined') {
      * Gets element full path in the DOM. Path includes node name and any CSS class names.
      * Node name will be lower-cased, but all CSS class name will be case sensitive.
      *
-     * @param {HTMLElement} Element of interest
+     * @param {Event} clickEvent
      * @returns {string}
      */
-    CT.getDomPath = function(element) {
+    CT.getDomPath = function(clickEvent) {
         var nodeName,
             cssClasses,
             fullPath = [],
-            current = element,
+            current = clickEvent.target || clickEvent.srcElement,
             doc = global.document;
 
         do {
@@ -61,8 +61,8 @@ if (typeof(window.ClickTracker) === 'undefined') {
      */
     CT.getClickPosition = function(event) {
         return {
-            x: event.pageX, 
-            y: event.pageY
+            x: event.x || event.pageX, 
+            y: event.y || event.pageY
         };
     };
 
@@ -74,9 +74,9 @@ if (typeof(window.ClickTracker) === 'undefined') {
      */
     CT.getTrackingData = function(clickEvent) {
         return {
-            path: CT.getDomPath(clickEvent.target),
+            path: CT.getDomPath(clickEvent),
             position: CT.getClickPosition(clickEvent),
-            url: global.location
+            url: global.location.href
         };
     };
 
@@ -97,7 +97,11 @@ if (typeof(window.ClickTracker) === 'undefined') {
      */
     CT.stopTracking = function() {
         if (trackingCallback) {
-            global.document.removeEventListener('click', logClickEvent);
+            if (global.document.removeEventListener) {
+                global.document.removeEventListener('click', logClickEvent);
+            } else {
+                global.document.detachEvent('onclick', logClickEvent);
+            }
         }
     };
 
@@ -117,6 +121,10 @@ if (typeof(window.ClickTracker) === 'undefined') {
 
         // Stores a reference to callback for event removal.
         trackingCallback = callback;
-        global.document.addEventListener('click', logClickEvent);
+        if (global.addEventListener) {
+            global.document.addEventListener('click', logClickEvent);
+        } else {
+            global.document.attachEvent('onclick', logClickEvent);
+        }
     };
 }
